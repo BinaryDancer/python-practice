@@ -1,7 +1,8 @@
 import collections
 
-variable_count = 1
 
+variable_count = 1
+BackwardData = collections.namedtuple("BackwardData", ["variable", "derivative"])
 
 # ## Module 1
 
@@ -275,7 +276,6 @@ class FunctionBase:
         # Tip: Note when implementing this function that
         # cls.backward may return either a value or a tuple.
         derivatives = wrap_tuple(cls.backward(ctx, d_output))
-        BackwardData = collections.namedtuple("BackwardData", ["variable", "derivative"])
         return [BackwardData(variable, derivative)
                 for variable, derivative in zip(inputs, derivatives)
                 if not is_constant(variable)]
@@ -299,12 +299,26 @@ def topological_sort(variable):
         list of Variables : Non-constant Variables in topological order
                             starting from the right.
     """
-    leaf_variables = []
-    if variable.is_leaf():
-        leaf_variables.append(variable)
-        variable.history.backprop_step()
-    for variable in backprop_result:
-        derivatives_queue.put(variable)
+    tmp_v = []
+    res = []
+    tmp_v.append(variable)
+    while tmp_v:
+        last_v = tmp_v.pop()
+        if not is_constant(last_v):
+            res.append(last_v)
+            if not last_v.is_leaf():
+                for v in last_v.history.inputs:
+                    tmp_v.append(v)
+
+    tmp_v2 = [variable]
+    res = [el if tmp_v2.apfor el in tmp_v2 if not is_constant(el)]
+    return res
+    # leaf_variables = []
+    # if variable.is_leaf():
+    #     leaf_variables.append(variable)
+    #     variable.history.backprop_step()
+    # for variable in backprop_result:
+    #     derivatives_queue.put(variable)
 
 
 def backpropagate(variable, deriv):
@@ -320,4 +334,14 @@ def backpropagate(variable, deriv):
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
+    vars: collections.deque[BackwardData] = collections.deque()
+    vars.append(BackwardData(variable, deriv))
 
+    while vars:
+        curr_var = vars.popleft()
+        if curr_var.variable.is_leaf():
+            curr_var.variable.accumulate_derivative(curr_var.derivative)
+        else:
+            next_vars = curr_var.variable.history.backprop_step(curr_var.derivative)
+            for var in next_vars:
+                vars.append(var)
