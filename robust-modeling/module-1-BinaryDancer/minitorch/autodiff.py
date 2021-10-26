@@ -310,15 +310,7 @@ def topological_sort(variable):
                 for v in last_v.history.inputs:
                     tmp_v.append(v)
 
-    tmp_v2 = [variable]
-    res = [el if tmp_v2.apfor el in tmp_v2 if not is_constant(el)]
     return res
-    # leaf_variables = []
-    # if variable.is_leaf():
-    #     leaf_variables.append(variable)
-    #     variable.history.backprop_step()
-    # for variable in backprop_result:
-    #     derivatives_queue.put(variable)
 
 
 def backpropagate(variable, deriv):
