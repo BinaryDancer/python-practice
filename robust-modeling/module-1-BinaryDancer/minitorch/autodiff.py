@@ -299,11 +299,11 @@ def topological_sort(variable):
         list of Variables : Non-constant Variables in topological order
                             starting from the right.
     """
-    tmp_v = []
+    tmp_v = collections.deque()
     res = []
     tmp_v.append(variable)
     while tmp_v:
-        last_v = tmp_v.pop()
+        last_v = tmp_v.popleft()
         if not is_constant(last_v):
             res.append(last_v)
             if not last_v.is_leaf():
@@ -326,6 +326,7 @@ def backpropagate(variable, deriv):
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
+    vars_sorted = topological_sort(variable)
     vars: collections.deque[BackwardData] = collections.deque()
     vars.append(BackwardData(variable, deriv))
 
