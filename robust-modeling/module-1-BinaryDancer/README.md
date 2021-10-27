@@ -10,3 +10,8 @@
 This assignment requires the following files from the previous assignments.
 
         minitorch/operators.py minitorch/module.py tests/test_module.py tests/test_operators.py project/run_manual.py
+
+![diag.png](diag.png)
+![simple.png](simple.png)
+![split.png](split.png)
+![xor.png](xor.png)

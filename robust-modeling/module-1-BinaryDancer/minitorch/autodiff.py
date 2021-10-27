@@ -299,16 +299,22 @@ def topological_sort(variable):
         list of Variables : Non-constant Variables in topological order
                             starting from the right.
     """
+    if is_constant(variable):
+        return []
+
     tmp_v = collections.deque()
     res = []
+    used = set()
     tmp_v.append(variable)
+    used.add(variable.unique_id)
     while tmp_v:
         last_v = tmp_v.popleft()
-        if not is_constant(last_v):
-            res.append(last_v)
-            if not last_v.is_leaf():
-                for v in last_v.history.inputs:
+        res.append(last_v)
+        if not last_v.is_leaf():
+            for v in last_v.history.inputs:
+                if not is_constant(v) and v.unique_id not in used:
                     tmp_v.append(v)
+                    used.add(v.unique_id)
 
     return res
 
@@ -326,15 +332,26 @@ def backpropagate(variable, deriv):
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    vars_sorted = topological_sort(variable)
-    vars: collections.deque[BackwardData] = collections.deque()
-    vars.append(BackwardData(variable, deriv))
+    vars_sorted: list[Variable] = topological_sort(variable)
+    temp_derivs = {var.unique_id: 0 for var in vars_sorted}
+    temp_derivs[variable.unique_id] = deriv
 
-    while vars:
-        curr_var = vars.popleft()
-        if curr_var.variable.is_leaf():
-            curr_var.variable.accumulate_derivative(curr_var.derivative)
+    for var in vars_sorted:
+        if var.is_leaf():
+            var.accumulate_derivative(temp_derivs[var.unique_id])
         else:
-            next_vars = curr_var.variable.history.backprop_step(curr_var.derivative)
-            for var in next_vars:
-                vars.append(var)
+            for back_data in var.history.backprop_step(temp_derivs[var.unique_id]):
+                temp_derivs[back_data.variable.unique_id] += back_data.derivative
+
+    # Почему так плохо?
+    # vars: collections.deque[BackwardData] = collections.deque()
+    # vars.append(BackwardData(variable, deriv))
+    #
+    # while vars:
+    #     curr_var = vars.popleft()
+    #     if curr_var.variable.is_leaf():
+    #         curr_var.variable.accumulate_derivative(curr_var.derivative)
+    #     else:
+    #         next_vars = curr_var.variable.history.backprop_step(curr_var.derivative)
+    #         for var in next_vars:
+    #             vars.append(var)
