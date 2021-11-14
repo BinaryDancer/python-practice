@@ -10,17 +10,6 @@ class System():
                 self.parts = list(el)
 
 
-class A:
-    def __init__(self):
-        self.parts = [1, 2, 3]
-
-
-class B(A):
-    def __init__(self):
-        super().__init__()
-        self.parts += [1, 3, 5]
-
-
 class Template:
     TEMPLATE_PARTS = """
 class {name}{req_systems}:
